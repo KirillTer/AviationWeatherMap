@@ -10,23 +10,30 @@ interface MapViewProps {
 }
 
 function formatPopupContent(props: WeatherProperties): string {
-  const hazard = props.hazard || props.phenomenon || 'Advisory';
-  const region = props.region || props.office || 'Unknown region';
-  const severity = props.severity || props.status || 'Active';
-  const floor = props.min_ft || props.floor || props.base;
-  const ceiling = props.max_ft || props.ceiling || props.top;
-  const timeFrom = props.validTimeFrom || props.valid_time_from || props.valid_from || props.issueTime;
-  const timeTo = props.validTimeTo || props.valid_time_to || props.valid_to;
+  const hazard = props.hazard || props.phenomenon || props.event || 'SIGMET';
+  const altitudeFloor = props.min_ft ?? props.floor ?? props.base;
+  const altitudeTop = props.max_ft ?? props.ceiling ?? props.top;
+  const altitudeText = `${altitudeFloor ?? 'Unknown'} to ${altitudeTop ?? 'Unknown'} ft`;
+  const validFrom = props.validTimeFrom || props.valid_time_from || props.valid_from || props.issueTime;
+  const validTo = props.validTimeTo || props.valid_time_to || props.valid_to;
+  const rawText = (props.raw_text || props.rawText || props.raw) as string | undefined;
 
   return `
-    <div style="font-family: 'Space Grotesk', 'Segoe UI', sans-serif; min-width: 220px;">
-      <div style="font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #0f172a;">${hazard}</div>
-      <div style="color: #475569; font-size: 13px; margin-bottom: 8px;">${region} · ${severity}</div>
-      <div style="font-size: 13px; color: #0f172a; margin-bottom: 2px;">Alt: ${floor ?? '—'} to ${ceiling ?? '—'} ft</div>
-      <div style="font-size: 12px; color: #475569;">${timeFrom || 'Unknown'} → ${timeTo || 'Unknown'}</div>
+    <div class="popup-card">
+      <div class="popup-header">
+        <span class="pill pill-sigmet is-active">SIGMET</span>
+        <span class="popup-hazard">${hazard}</span>
+      </div>
+      <div class="popup-line"><span class="popup-label">Hazard:</span><span>${hazard}</span></div>
+      <div class="popup-line"><span class="popup-label">Altitude:</span><span>${altitudeText}</span></div>
+      <div class="popup-line"><span class="popup-label">Valid From:</span><span>${validFrom || 'Unknown'}</span></div>
+      <div class="popup-line"><span class="popup-label">Valid To:</span><span>${validTo || 'Unknown'}</span></div>
+      ${rawText ? `<div class="popup-raw">${rawText}</div>` : ''}
     </div>
   `;
 }
+
+const DEFAULT_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
 
 const MapView = ({ sigmets, airSigmets, showSigmet, showAirSigmet }: MapViewProps) => {
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -37,10 +44,10 @@ const MapView = ({ sigmets, airSigmets, showSigmet, showAirSigmet }: MapViewProp
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: 'https://demotiles.maplibre.org/style.json',
+      style: DEFAULT_STYLE,
       center: [-96, 38],
       zoom: 3.8,
-      attributionControl: true
+      attributionControl: { compact: true }
     });
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
@@ -91,7 +98,7 @@ const MapView = ({ sigmets, airSigmets, showSigmet, showAirSigmet }: MapViewProp
         });
       }
 
-      const handleClick = (layerId: string) => (event: maplibregl.MapMouseEvent & maplibregl.EventData) => {
+      const handleClick = (layerId: string) => (event: maplibregl.MapLayerMouseEvent) => {
         const feature = event.features?.[0];
         if (!feature?.properties) return;
         const popupHtml = formatPopupContent(feature.properties as WeatherProperties);
@@ -121,7 +128,7 @@ const MapView = ({ sigmets, airSigmets, showSigmet, showAirSigmet }: MapViewProp
       map.remove();
       mapRef.current = null;
     };
-  }, [airSigmets, sigmets]);
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -146,7 +153,7 @@ const MapView = ({ sigmets, airSigmets, showSigmet, showAirSigmet }: MapViewProp
     setVisibility('airsigmet-outline', showAirSigmet);
   }, [sigmets, airSigmets, showAirSigmet, showSigmet]);
 
-  return <div ref={containerRef} className="map-inner" />;
+  return <div ref={containerRef} className="map-canvas" />;
 };
 
 export default MapView;

@@ -1,6 +1,6 @@
 # Aviation Weather Map
 
-Interactive React + MapLibre GL viewer for SIGMET and AIRSIGMET advisories from the Aviation Weather Center API. Includes altitude and time filters, layer toggles, and clickable popups.
+Interactive React + MapLibre GL viewer for SIGMET and AIRSIGMET advisories from the Aviation Weather Center (AWC) API.
 
 ## Features
 - MapLibre GL with OpenStreetMap tiles and live GeoJSON layers.
@@ -15,7 +15,7 @@ Interactive React + MapLibre GL viewer for SIGMET and AIRSIGMET advisories from 
    ```bash
    npm install
    ```
-2. Start dev server:
+2. Start dev server (uses Vite proxy for AWC API on localhost):
    ```bash
    npm run dev
    ```
@@ -25,6 +25,12 @@ Interactive React + MapLibre GL viewer for SIGMET and AIRSIGMET advisories from 
    npm test -- --run
    ```
 
+## Data source & CORS
+- The app calls the AWC Data API (`/api/data/isigmet`, `/api/data/airsigmet`).
+- On localhost, requests are proxied via Vite: `/api/awc/*` → `https://aviationweather.gov/api/data/*`.
+- Map base layer uses Carto Positron GL style (`https://basemaps.cartocdn.com/gl/positron-gl-style/style.json`) for reliability. If you prefer MapLibre demo tiles, set `DEFAULT_STYLE` in `src/components/MapView.tsx` accordingly.
+- In production, the app defaults to hitting `https://aviationweather.gov/api/data`. Override with `VITE_AWC_BASE` if you need a custom proxy or different base.
+- Query params used: `format=geojson`, `from=<ISO>`, `to=<ISO>` built around the selected reference time (24h back, 6h forward).
+
 ## Notes
-- Data source endpoints use the AWC Data API (`/api/data/isigmet`, `/api/data/airsigmet`) and a Vite dev proxy (`/api/awc` → `https://aviationweather.gov/api/data`) to avoid CORS during development. For production, set `VITE_AWC_BASE=https://aviationweather.gov/api/data` or route through your own backend.
-- Time filtering uses a client-side window centered on the chosen offset (24h back / 6h forward). Altitude filtering uses any available altitude properties present in the feed (`min_ft`, `max_ft`, `floor`, `ceiling`, etc.).
+- Time filtering uses a client-side window centered on the chosen offset. Altitude filtering uses available altitude properties (`min_ft`, `max_ft`, `floor`, `ceiling`, etc.).

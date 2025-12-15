@@ -1,8 +1,17 @@
 import { WeatherFeatureCollection } from '../types';
 import { buildTimeWindow } from '../utils/time';
 
-// Use Vite proxy during dev to avoid CORS; override with VITE_AWC_BASE for production if needed
-const API_BASE = import.meta.env.VITE_AWC_BASE ?? '/api/awc';
+// Base URL resolution: env override > dev proxy > direct API
+// This avoids CORS in local dev (proxy) while still working in production by default.
+const resolveApiBase = () => {
+  if (import.meta.env.VITE_AWC_BASE) return import.meta.env.VITE_AWC_BASE;
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return '/api/awc';
+  }
+  return 'https://aviationweather.gov/api/data';
+};
+
+const API_BASE = resolveApiBase();
 const DEMO_HEADERS = { Accept: 'application/geo+json, application/json' };
 
 async function fetchGeoJson(url: string, signal?: AbortSignal): Promise<WeatherFeatureCollection> {

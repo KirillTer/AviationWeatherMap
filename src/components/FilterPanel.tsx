@@ -6,11 +6,11 @@ interface FilterPanelProps {
   showAirSigmet: boolean;
   altitudeRange: [number, number];
   timeOffset: number;
+  currentTimeLabel: string;
   onToggleSigmet: (value: boolean) => void;
   onToggleAirSigmet: (value: boolean) => void;
   onAltitudeChange: (range: [number, number]) => void;
   onTimeChange: (offset: number) => void;
-  onReset: () => void;
 }
 
 const clampAltitude = (value: number) => Math.min(48000, Math.max(0, value));
@@ -20,11 +20,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   showAirSigmet,
   altitudeRange,
   timeOffset,
+  currentTimeLabel,
   onToggleSigmet,
   onToggleAirSigmet,
   onAltitudeChange,
-  onTimeChange,
-  onReset
+  onTimeChange
 }) => {
   const [altMin, altMax] = altitudeRange;
 
@@ -39,31 +39,37 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   };
 
   return (
-    <div className="panel">
-      <h3 className="panel-title">Filters</h3>
-      <p className="secondary">Adjust layers, altitude, and reference time. Updates apply instantly.</p>
-
-      <div className="toggle-row">
-        <span className="label-strong">SIGMET</span>
-        <input type="checkbox" checked={showSigmet} onChange={(e) => onToggleSigmet(e.target.checked)} />
-      </div>
-      <div className="toggle-row">
-        <span className="label-strong">AIR SIGMET</span>
-        <input type="checkbox" checked={showAirSigmet} onChange={(e) => onToggleAirSigmet(e.target.checked)} />
-      </div>
-
-      <div className="toggle-row" style={{ borderBottom: 'none' }}>
-        <div>
-          <div className="label-strong">Altitude window</div>
-          <p className="secondary">0–48,000 ft</p>
+    <div className="card">
+      <div className="card-row">
+        <div className="card-label">Layers</div>
+        <div className="pill-group">
+          <button
+            type="button"
+            className={`pill pill-sigmet ${showSigmet ? 'is-active' : ''}`}
+            onClick={() => onToggleSigmet(!showSigmet)}
+          >
+            SIGMET
+          </button>
+          <button
+            type="button"
+            className={`pill pill-airsigmet ${showAirSigmet ? 'is-active' : ''}`}
+            onClick={() => onToggleAirSigmet(!showAirSigmet)}
+          >
+            AIRSIGMET
+          </button>
         </div>
-        <div className="range-group">
+      </div>
+
+      <div className="card-section">
+        <div className="card-label">Altitude Range</div>
+        <div className="card-sub">0 - 48,000 ft</div>
+        <div className="dual-slider">
           <input
             aria-label="Minimum altitude"
             type="range"
             min={0}
             max={48000}
-            step={1000}
+            step={500}
             value={altMin}
             onChange={(e) => handleMinChange(Number(e.target.value))}
             className="slider"
@@ -73,21 +79,21 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             type="range"
             min={0}
             max={48000}
-            step={1000}
+            step={500}
             value={altMax}
             onChange={(e) => handleMaxChange(Number(e.target.value))}
             className="slider"
           />
         </div>
-      </div>
-      <div className="range-labels">
-        <span>{altMin.toLocaleString()} ft</span>
-        <span>{altMax.toLocaleString()} ft</span>
+        <div className="range-labels tight">
+          <span>{altMin.toLocaleString()} ft</span>
+          <span>{altMax.toLocaleString()} ft</span>
+        </div>
       </div>
 
-      <div className="panel" style={{ marginTop: 12 }}>
-        <div className="label-strong">Reference time</div>
-        <p className="secondary">Slide -24h to +6h from now</p>
+      <div className="card-section">
+        <div className="card-label">Time Filter</div>
+        <div className="card-sub">Slide -24h to +6h from now</div>
         <input
           aria-label="Time offset"
           type="range"
@@ -98,18 +104,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           onChange={(e) => onTimeChange(Number(e.target.value))}
           className="slider"
         />
-        <div className="range-labels">
+        <div className="range-labels tight">
           <span>-24h</span>
           <span>{formatOffsetLabel(timeOffset)}</span>
           <span>+6h</span>
         </div>
-        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-          <button className="button" type="button" onClick={() => onTimeChange(0)}>
-            Jump to Now
-          </button>
-          <button className="button" type="button" onClick={onReset} style={{ background: '#1e293b' }}>
-            Reset filters
-          </button>
+        <div className="time-readout">
+          <div className="card-sub">Current time</div>
+          <div className="time-value">{currentTimeLabel}</div>
         </div>
       </div>
     </div>
